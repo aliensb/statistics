@@ -43,10 +43,10 @@ public class FileWriterServiceImp implements FileWriterService {
         FileChannel fileChannel=null;
         List<String> lists= JsonUtils.paseJsonArray(str);
         Map<String,List<JSONObject>> param=new HashMap<>();
-        Set<String> oid=new HashSet<>();
+        Set<String> oids=new HashSet<>();
         for(int i=0;i<lists.size();i++){
             userId= (String) JSONObject.fromObject(lists.get(i)).get("oid");
-            if(oid.add(userId)){
+            if(oids.add(userId)){
                 List<JSONObject> values=new ArrayList<>();
                 values.add(JSONObject.fromObject(lists.get(i)));
                 param.put(userId,values);
@@ -54,6 +54,8 @@ public class FileWriterServiceImp implements FileWriterService {
                 param.get(userId).add(JSONObject.fromObject(lists.get(i)));
             }
         }
+        oids.clear();
+        oids=null;
 
         try{
             //outputStream=new FileOutputStream(userInfoFile,true);
