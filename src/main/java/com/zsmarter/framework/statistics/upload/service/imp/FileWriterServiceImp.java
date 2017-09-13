@@ -1,16 +1,10 @@
 package com.zsmarter.framework.statistics.upload.service.imp;
-
 import com.zsmarter.framework.statistics.upload.service.FileWriterService;
-
 import com.zsmarter.framework.statistics.upload.utils.JsonUtils;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import sun.nio.ch.FileChannelImpl;
-
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -25,77 +19,88 @@ import java.util.*;
 public class FileWriterServiceImp implements FileWriterService {
     @Value("${parentPath}")
     private String parentPath;
-    @Override
-    public void wireFile(String str) {
-        String userId="10086";
-        String lineSeparator=System.getProperty("line.separator");
-        str+=lineSeparator;
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        File directory=new File(parentPath+File.separator+df.format(new Date()));
-        if(!directory.exists()){
-            directory.mkdirs();
-        }
-        Set<OpenOption> openOptions=new HashSet<OpenOption>();
-        openOptions.add(StandardOpenOption.CREATE);
-        openOptions.add(StandardOpenOption.WRITE);
 
-       // FileOutputStream outputStream=null;
-        FileChannel fileChannel=null;
-        List<String> lists= JsonUtils.paseJsonArray(str);
-        Map<String,List<JSONObject>> param=new HashMap<>();
-        Set<String> oids=new HashSet<>();
-        for(int i=0;i<lists.size();i++){
-            userId= (String) JSONObject.fromObject(lists.get(i)).get("oid");
-            if(oids.add(userId)){
-                List<JSONObject> values=new ArrayList<>();
-                values.add(JSONObject.fromObject(lists.get(i)));
-                param.put(userId,values);
-            }else {
-                param.get(userId).add(JSONObject.fromObject(lists.get(i)));
+    private String lineSeparator = System.getProperty("line.separator");
+
+    @Override
+    public void doWrite(String str) {
+        Map<String, List<String>> parmas = convertData(str);
+        Iterator<String> kIt = parmas.keySet().iterator();
+        while (kIt.hasNext()) {
+            String userId = kIt.next();
+            List<String> values = parmas.get(userId);
+            String data = convertListToString(values);
+            writeToFile(userId,data);
+        }
+    }
+
+
+    private Map<String, List<String>> convertData(String str) {
+        String userId = "";
+        List<JSONObject> lists = JsonUtils.paseJsonArray(str);
+        Map<String, List<String>> param = new HashMap<>();
+        Set<String> oids = new HashSet<>();
+        for (int i = 0; i < lists.size(); i++) {
+            userId = (String) JSONObject.fromObject(lists.get(i)).get("oid");
+            if (oids.add(userId)) {
+                List<String> values = new ArrayList<>();
+                values.add((lists.get(i)).toString());
+                param.put(userId, values);
+            } else {
+                param.get(userId).add((lists.get(i)).toString());
             }
         }
         oids.clear();
-        oids=null;
+        return param;
+    }
 
-        try{
-            //outputStream=new FileOutputStream(userInfoFile,true);
-            //fileChannel=outputStream.getChannel();
-           // fileChannel=FileChannel.open(u)
-            for(int i=0;i<lists.size();i++){
 
-                File userInfoFile=new File(directory.getPath()+File.separator+userId+".txt");
-                //File userInfoFile=new File(userId+".txt");
-                Path path= Paths.get(userInfoFile.toURI());
-                if(!userInfoFile.exists()){
-                    fileChannel= FileChannel.open(path, openOptions);
-                    //fileChannel=FileChannel.open(path, StandardOpenOption.APPEND);
-                }else {
-                    fileChannel=FileChannel.open(path, StandardOpenOption.APPEND);
-                }
-                ByteBuffer buffer=ByteBuffer.wrap(lists.get(i).getBytes());
-                buffer.flip();
-                fileChannel.write(buffer);
-                buffer.clear();
-            }
-        }catch (Exception e) {
-            e.printStackTrace();
-            return;
+    private String convertListToString(List<String> values) {
+        if(values==null||values.size()==0){
+            return "";
         }
-        finally {
-            if(fileChannel!=null){
+        StringBuilder stringBuilder = new StringBuilder();
+        for (int i = 0; i < values.size(); i++) {
+            stringBuilder.append(values.get(1) + lineSeparator);
+        }
+        return stringBuilder.toString();
+    }
+
+
+    private void writeToFile(String userId, String date) {
+        FileChannel fileChannel = null;
+        Set<OpenOption> openOptions = new HashSet<OpenOption>();
+        openOptions.add(StandardOpenOption.CREATE);
+        openOptions.add(StandardOpenOption.WRITE);
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+        File directory = new File(parentPath + File.separator + df.format(new Date()));
+        if (!directory.exists()) {
+            directory.mkdirs();
+        }
+        File userInfoFile = new File(directory.getPath() + File.separator + userId + ".txt");
+        Path path = Paths.get(userInfoFile.toURI());
+        try {
+            if (!userInfoFile.exists()) {
+                fileChannel = FileChannel.open(path, openOptions);
+            } else {
+                fileChannel = FileChannel.open(path, StandardOpenOption.APPEND);
+            }
+            byte[] bytes=date.getBytes();
+            ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
+            buffer.put(bytes);
+            buffer.flip();
+            fileChannel.write(buffer);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (fileChannel != null) {
                 try {
                     fileChannel.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
             }
-//            if(outputStream!=null){
-//                try {
-//                    outputStream.close();
-//                } catch (IOException e) {
-//                    e.printStackTrace();
-//                }
-//            }
         }
     }
 }

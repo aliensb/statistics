@@ -22,7 +22,7 @@ public class UploadController {
         if(StringUtil.isBlank(params)){
             logger.error("参数不能为空");
         }
-        fileWriterService.wireFile(params);
+        fileWriterService.doWrite(params);
         return "ok";
     }
     @PostMapping("/uploadbio")
