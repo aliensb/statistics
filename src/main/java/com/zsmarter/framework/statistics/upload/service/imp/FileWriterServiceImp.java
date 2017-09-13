@@ -2,6 +2,8 @@ package com.zsmarter.framework.statistics.upload.service.imp;
 import com.zsmarter.framework.statistics.upload.service.FileWriterService;
 import com.zsmarter.framework.statistics.upload.utils.JsonUtils;
 import net.sf.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import java.io.File;
@@ -22,6 +24,8 @@ public class FileWriterServiceImp implements FileWriterService {
 
     private String lineSeparator = System.getProperty("line.separator");
 
+    private final Logger logger = LoggerFactory.getLogger(this.getClass());
+
     @Override
     public void doWrite(String str) {
         Map<String, List<String>> parmas = convertData(str);
@@ -35,7 +39,7 @@ public class FileWriterServiceImp implements FileWriterService {
     }
 
 
-    private Map<String, List<String>> convertData(String str) {
+    public Map<String, List<String>> convertData(String str) {
         String userId = "";
         List<JSONObject> lists = JsonUtils.paseJsonArray(str);
         Map<String, List<String>> param = new HashMap<>();
@@ -55,19 +59,19 @@ public class FileWriterServiceImp implements FileWriterService {
     }
 
 
-    private String convertListToString(List<String> values) {
+    public String convertListToString(List<String> values) {
         if(values==null||values.size()==0){
             return "";
         }
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = 0; i < values.size(); i++) {
-            stringBuilder.append(values.get(1) + lineSeparator);
+            stringBuilder.append(values.get(i) + lineSeparator);
         }
         return stringBuilder.toString();
     }
 
 
-    private void writeToFile(String userId, String date) {
+    private void writeToFile(String userId, String data) {
         FileChannel fileChannel = null;
         Set<OpenOption> openOptions = new HashSet<OpenOption>();
         openOptions.add(StandardOpenOption.CREATE);
@@ -85,13 +89,14 @@ public class FileWriterServiceImp implements FileWriterService {
             } else {
                 fileChannel = FileChannel.open(path, StandardOpenOption.APPEND);
             }
-            byte[] bytes=date.getBytes();
+            byte[] bytes=data.getBytes();
             ByteBuffer buffer = ByteBuffer.allocate(bytes.length);
             buffer.put(bytes);
             buffer.flip();
             fileChannel.write(buffer);
 
         } catch (Exception e) {
+            logger.error("写人文件失败：userId:"+userId+"||数据:"+data);
             e.printStackTrace();
         } finally {
             if (fileChannel != null) {

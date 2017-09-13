@@ -1,5 +1,6 @@
 package com.zsmarter.framework.statistics.upload.service.bio.imp;
 
+import com.zsmarter.framework.statistics.upload.service.FileWriterService;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterHandler;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterHandlerExecutePool;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterServiceBio;
@@ -10,15 +11,21 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 @Service
 public class FileWriterServiceBioImp implements FileWriterServiceBio {
     @Value("${parentPath}")
     private String parentPath;
+
+
     @Autowired
     private FileWriterHandlerExecutePool pool;
+    @Autowired
+    private FileWriterService fileWriterService;
     @Override
     public void write(String str) {
-        String userId="10086";
         String lineSeparator=System.getProperty("line.separator");
         str+=lineSeparator;//回车符
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
@@ -26,7 +33,9 @@ public class FileWriterServiceBioImp implements FileWriterServiceBio {
         if(!directory.exists()){
             directory.mkdirs();
         }
-        File userInfoFile=new File(directory.getPath()+File.separator+userId+".txt");
-        pool.execute(new FileWriterHandler(str,userInfoFile));
+        Map<String,List<String>> params= fileWriterService.convertData(str);
+        pool.execute(new FileWriterHandler(params,directory));
     }
+
+
 }
