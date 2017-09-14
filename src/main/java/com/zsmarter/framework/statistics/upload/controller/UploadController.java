@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.HashMap;
+import java.util.Map;
 
 @Controller
 public class UploadController {
@@ -22,9 +24,14 @@ public class UploadController {
     private FileWriterServiceBio fileWriterServiceBio;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
     @PostMapping("/upload")
-    public @ResponseBody String index(@RequestBody String params){
+    public @ResponseBody
+    Map<String,String> index(@RequestBody String params){
+        Map<String,String> retMsg=new HashMap<>();
+
         if(StringUtil.isBlank(params)){
             logger.error("参数不能为空");
+            retMsg.put("code","01");
+            return retMsg;
         }
         if(!params.trim().startsWith("[")){
             try {
@@ -35,10 +42,18 @@ public class UploadController {
             } catch (UnsupportedEncodingException e) {
                 logger.error("参数错误："+params);
                 e.printStackTrace();
+                retMsg.put("code","01");
+                return retMsg;
             }
         }
-        fileWriterService.doWrite(params);
-        return "ok";
+        if("00".equals(fileWriterService.doWrite(params))){
+            retMsg.put("code","00");
+            return retMsg;
+        }else{
+            retMsg.put("code","01");
+            return retMsg;
+        }
+
     }
     @PostMapping("/uploadbio")
     public @ResponseBody String uploadWithBio(@RequestBody String params){
