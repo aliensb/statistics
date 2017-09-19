@@ -2,6 +2,7 @@ package com.zsmarter.framework.statistics.upload.controller;
 
 import com.zsmarter.framework.statistics.upload.service.FileWriterService;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterServiceBio;
+import com.zsmarter.framework.statistics.upload.service.common.CommonService;
 import com.zsmarter.framework.statistics.upload.utils.StringUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import java.util.Map;
 @Controller
 public class UploadController {
     @Autowired
-    private FileWriterService fileWriterService;
+    private CommonService  commonService;
     @Autowired
     private FileWriterServiceBio fileWriterServiceBio;
     private final Logger logger = LoggerFactory.getLogger(this.getClass());
@@ -46,7 +47,7 @@ public class UploadController {
                 return retMsg;
             }
         }
-        if("00".equals(fileWriterService.doWrite(params))){
+        if("00".equals(commonService.doWrite(params))){
             retMsg.put("code","00");
             return retMsg;
         }else{

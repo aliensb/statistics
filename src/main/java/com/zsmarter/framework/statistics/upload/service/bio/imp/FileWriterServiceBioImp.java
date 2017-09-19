@@ -4,6 +4,7 @@ import com.zsmarter.framework.statistics.upload.service.FileWriterService;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterHandler;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterHandlerExecutePool;
 import com.zsmarter.framework.statistics.upload.service.bio.FileWriterServiceBio;
+import com.zsmarter.framework.statistics.upload.service.common.CommonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,7 +24,8 @@ public class FileWriterServiceBioImp implements FileWriterServiceBio {
     @Autowired
     private FileWriterHandlerExecutePool pool;
     @Autowired
-    private FileWriterService fileWriterService;
+    private CommonService commonService;
+
     @Override
     public void write(String str) {
         String lineSeparator=System.getProperty("line.separator");
@@ -33,7 +35,7 @@ public class FileWriterServiceBioImp implements FileWriterServiceBio {
         if(!directory.exists()){
             directory.mkdirs();
         }
-        Map<String,List<String>> params= fileWriterService.convertData(str);
+        Map<String,List<String>> params= commonService.convertData(str);
         pool.execute(new FileWriterHandler(params,directory));
     }
 
